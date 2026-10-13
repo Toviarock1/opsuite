@@ -63,7 +63,7 @@ curl https://<render-url>/health
 
 ### `GET /api/sales/today`
 
-Today = current date in `Africa/Lagos`. `total` is `SUM(amount)` over the whole day from the DB, never summed in the browser. Newest first, 10 per page (max 50).
+Today = current date in `Africa/Lagos`. `total` is `SUM(amount)` over the whole day from the DB, never summed in the browser. Most recently added first, 10 per page (max 50).
 
 ```bash
 curl "https://<render-url>/api/sales/today?page=1&pageSize=10&search=indomie"

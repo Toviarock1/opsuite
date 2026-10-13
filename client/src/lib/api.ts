@@ -93,20 +93,32 @@ export async function fetchTodaySales(
   return data;
 }
 
-export async function createSale(input: SaleInput): Promise<void> {
-  try {
-    await client.post("/api/sales", input);
-  } catch (error) {
-    throw toApiError(error, "Could not save sale.");
+function assertSaleShape(data: unknown): asserts data is { sale: Sale } {
+  if (typeof data !== "object" || data === null || !("sale" in data)) {
+    throw new Error("API returned an unexpected shape. Expected { sale }.");
   }
 }
 
-export async function updateSale(id: number, input: SaleInput): Promise<void> {
+export async function createSale(input: SaleInput): Promise<Sale> {
+  let data: unknown;
   try {
-    await client.put(`/api/sales/${id}`, input);
+    ({ data } = await client.post("/api/sales", input));
+  } catch (error) {
+    throw toApiError(error, "Could not save sale.");
+  }
+  assertSaleShape(data);
+  return data.sale;
+}
+
+export async function updateSale(id: number, input: SaleInput): Promise<Sale> {
+  let data: unknown;
+  try {
+    ({ data } = await client.put(`/api/sales/${id}`, input));
   } catch (error) {
     throw toApiError(error, "Could not update sale.");
   }
+  assertSaleShape(data);
+  return data.sale;
 }
 
 export async function deleteSale(id: number): Promise<void> {

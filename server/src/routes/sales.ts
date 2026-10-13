@@ -7,7 +7,7 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 const router = Router();
 
 // Today's sales in Lagos time, plus a DB-side total (SUM, never in the browser).
-// Paginated newest-first so a just-logged sale shows on page 1.
+// Newest-added first (id desc), so a just-logged sale is always on top of page 1.
 router.get(
   "/today",
   asyncHandler(async (req, res) => {
@@ -31,7 +31,7 @@ router.get(
     const [sales, aggregate, totalCount] = await Promise.all([
       prisma.sale.findMany({
         where,
-        orderBy: [{ soldAt: "desc" }, { id: "desc" }],
+        orderBy: { id: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
