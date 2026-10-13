@@ -9,7 +9,8 @@ A small shop app to log sales (item, whole-naira amount, time) and see today's s
 - Database: Supabase Postgres (PostgreSQL-compatible hosted DB)
 - Validation: hand-written server validator returning clear `400 { error }`
 - Money: `Int` (whole naira), formatted with `Intl.NumberFormat("en-NG", { currency: "NGN" })`
-- Tests: Node's built-in test runner, no extra dependencies (`npm test` in `server/`)
+- Tests: Jest + ts-jest — 7 validation unit tests (`npm test`) plus 4 sales-endpoint tests against a real database (`npm run test:api`, needs `DATABASE_URL`)
+- Hardening: `helmet` headers, rate limiting on write endpoints (100 per 15 min per IP), `pino` JSON logs, graceful shutdown on SIGTERM/SIGINT
 
 ## Local setup
 
@@ -22,7 +23,8 @@ cp .env.example .env   # fill in Supabase pooler + direct URLs, CLIENT_ORIGIN
 npm install
 npx prisma migrate dev --name init
 npm run db:seed        # 12 realistic sales for one day
-npm test               # unit tests (validation + day-range logic)
+npm test               # unit tests, no DB needed
+npm run test:api       # endpoint tests, needs DATABASE_URL in .env
 npm run dev            # http://localhost:4000
 
 # 2. Frontend (new terminal)
@@ -42,6 +44,7 @@ Server (`server/.env`):
 | `DIRECT_URL` | `postgresql://...:5432/postgres` | Migrations via direct connection |
 | `PORT` | `4000` | Render injects its own port |
 | `CLIENT_ORIGIN` | `https://daily-sales-log.vercel.app` | CORS allow-list, comma-separated if needed |
+| `LOG_LEVEL` | `info` | Optional pino log level (`debug` locally) |
 
 Client (`client/.env`):
 
@@ -139,4 +142,4 @@ My key decisions and their trade-offs:
 3. I used TanStack Query on the frontend instead of hand-rolled fetch state because refetching after every save used to flash a loading screen. The query cache keeps the table on screen while fresh data loads in the background. The trade-off is one extra dependency and cache keys to reason about, but the code is smaller than my original `useState`/`useEffect` version.
 4. I kept validation hand-written with clear 400 messages instead of adding Zod, and used Node's built-in test runner instead of adding Vitest/Jest. For three fields and pure-function tests, fewer dependencies means less to defend line-by-line.
 
-With more time I would add shop accounts and login (right now anyone with the URL can edit everything), route-level integration tests against a test database, and a day-picker so the owner can look back at past days instead of only today.
+With more time I would add shop accounts and login (right now anyone with the URL can edit everything), a day-picker so the owner can look back at past days instead of only today, and a React error-boundary fallback test plus an end-to-end smoke test of the deployed frontend.
