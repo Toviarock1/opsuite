@@ -7,7 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest src/validation",
+    "test:api": "NODE_OPTIONS=--experimental-vm-modules jest src/routes",
     "postinstall": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "lint": "eslint ."
@@ -19,17 +20,23 @@
     "@prisma/client": "^5.22.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "pino": "^10.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.7.4",
     "eslint": "^9.12.0",
+    "jest": "^30.5.2",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "prisma": "^5.22.0",
+    "ts-jest": "^29.4.14",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.8.0"
