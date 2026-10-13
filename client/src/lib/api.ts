@@ -77,30 +77,20 @@ export async function fetchTodaySales(
     pageSize: String(pageSize),
   };
   if (search.trim()) params.search = search.trim();
+  let data: unknown;
   try {
-    const { data } = await client.get("/api/sales/today", { params });
-    if (typeof data === "string") {
-      // HTML instead of JSON: wrong VITE_API_URL or backend waking up.
-      throw new Error(
-        "API did not return JSON. Check VITE_API_URL and that the backend is awake.",
-      );
-    }
-    assertTodayShape(data);
-    return data;
+    ({ data } = await client.get("/api/sales/today", { params }));
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.startsWith("API did not return JSON")
-    )
-      throw error;
-    if (
-      error instanceof Error &&
-      error.message.startsWith("API returned an unexpected shape")
-    ) {
-      throw error;
-    }
     throw toApiError(error, "Could not load sales.");
   }
+  if (typeof data === "string") {
+    // HTML instead of JSON: wrong VITE_API_URL or backend waking up.
+    throw new Error(
+      "API did not return JSON. Check VITE_API_URL and that the backend is awake.",
+    );
+  }
+  assertTodayShape(data);
+  return data;
 }
 
 export async function createSale(input: SaleInput): Promise<void> {

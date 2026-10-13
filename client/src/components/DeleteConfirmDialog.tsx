@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Sale } from "../lib/api";
 import { formatNaira } from "../utils/formatNaira";
+import { Button } from "./Button";
 
 type Props = {
   sale: Sale;
@@ -49,23 +50,12 @@ export function DeleteConfirmDialog({
         </p>
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            ref={cancelRef}
-            type="button"
-            onClick={onCancel}
-            disabled={deleting}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
-          >
+          <Button ref={cancelRef} onClick={onCancel} disabled={deleting}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:bg-gray-400"
-          >
+          </Button>
+          <Button variant="danger" onClick={onConfirm} disabled={deleting}>
             {deleting ? "Deleting…" : "Delete"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

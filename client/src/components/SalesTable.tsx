@@ -1,6 +1,7 @@
 import type { Sale } from "../lib/api";
 import { formatLagosTime } from "../utils/datetime";
 import { formatNaira } from "../utils/formatNaira";
+import { Button } from "./Button";
 
 type Props = {
   sales: Sale[];
@@ -81,21 +82,17 @@ export function SalesTable({
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="inline-flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(sale)}
-                    className="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                  >
+                  <Button size="sm" onClick={() => onEdit(sale)}>
                     Edit
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
                     disabled={deletingId === sale.id}
                     onClick={() => onDelete(sale)}
-                    className="rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {deletingId === sale.id ? "Deleting…" : "Delete"}
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>
