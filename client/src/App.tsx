@@ -90,7 +90,7 @@ export default function App() {
 
           {loading ? (
             <p className="rounded-lg border border-gray-200 bg-white p-6 text-center text-gray-600">
-              Loading today&apos;s sales…
+              Loading sales…
             </p>
           ) : error ? (
             <div className="rounded-lg border border-red-200 bg-white p-6 text-center">
