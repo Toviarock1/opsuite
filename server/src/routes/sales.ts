@@ -14,9 +14,15 @@ router.get(
     const { start, end } = getLagosDayRange();
 
     // Optional name filter. Trimmed, capped, case-insensitive.
-    const search = typeof req.query.search === "string" ? req.query.search.trim().slice(0, 100) : "";
+    const search =
+      typeof req.query.search === "string"
+        ? req.query.search.trim().slice(0, 100)
+        : "";
     const where = search
-      ? { soldAt: { gte: start, lt: end }, itemName: { contains: search, mode: "insensitive" as const } }
+      ? {
+          soldAt: { gte: start, lt: end },
+          itemName: { contains: search, mode: "insensitive" as const },
+        }
       : { soldAt: { gte: start, lt: end } };
 
     const page = parsePositiveInt(req.query.page, 1);
