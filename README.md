@@ -131,7 +131,7 @@ Returns `204` on success, `400` for a bad id, `404 { error }` for unknown ids.
 
 Write endpoints are rate-limited (100 per 15 minutes per IP, `429` with a JSON error when exceeded); reads are unlimited.
 
-## Notes (draft — rewrite in your own words)
+## Notes
 
 What I built: a daily sales log where a shop owner logs item/amount/time and sees today's sales plus a DB-computed total. It grew into editing and deleting sales with a confirm dialog, case-insensitive search, paginated browsing with newest-added-first ordering, instant cache updates so saves show immediately, and Jest suites covering validation plus the sales endpoints.
 
