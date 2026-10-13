@@ -1,3 +1,5 @@
+import axios, { AxiosError, type AxiosInstance } from "axios";
+
 export type Sale = {
   id: number;
   itemName: string;
@@ -14,37 +16,53 @@ export type TodaySalesResponse = {
   totalPages: number;
 };
 
-const baseUrl =
-  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ??
-  "";
+export type SaleInput = {
+  itemName: string;
+  amount: number;
+  soldAt: string;
+};
 
-function requestUrl(path: string): string {
-  if (!baseUrl) return path;
-  return `${baseUrl}${path}`;
-}
+const client: AxiosInstance = axios.create({
+  // Empty baseURL means same-origin relative calls (VITE_API_URL unset).
+  baseURL:
+    (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ??
+    "",
+  headers: { "Content-Type": "application/json" },
+  // Render's free tier can take ~60s to wake up; don't cut it off early.
+  timeout: 60_000,
+});
 
-async function parseError(res: Response): Promise<string> {
-  try {
-    const data = (await res.json()) as { error?: string };
-    if (data.error) return data.error;
-  } catch {
-    // fall through to generic message
-  }
-  return `Request failed (${res.status}).`;
-}
-
-async function readJson(res: Response): Promise<unknown> {
-  const contentType = res.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    throw new Error(
-      `API did not return JSON (status ${res.status}). Check VITE_API_URL and that the backend is awake.`,
+function toApiError(error: unknown, fallback: string): Error {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<{ error?: string }>;
+    if (axiosError.response) {
+      // Server answered with an error status. Prefer its message.
+      const serverMessage = axiosError.response.data?.error;
+      if (typeof serverMessage === "string" && serverMessage)
+        return new Error(serverMessage);
+      return new Error(`Request failed (${axiosError.response.status}).`);
+    }
+    // No response: wrong URL, backend asleep/unreachable, or timeout.
+    return new Error(
+      "Cannot reach the API. Check VITE_API_URL and that the backend is running.",
     );
   }
-  try {
-    return await res.json();
-  } catch {
+  return new Error(fallback);
+}
+
+function assertTodayShape(data: unknown): asserts data is TodaySalesResponse {
+  const response = data as TodaySalesResponse;
+  if (
+    typeof response !== "object" ||
+    response === null ||
+    !Array.isArray(response.sales) ||
+    typeof response.total !== "number" ||
+    typeof response.page !== "number" ||
+    typeof response.totalPages !== "number" ||
+    typeof response.totalCount !== "number"
+  ) {
     throw new Error(
-      `API did not return JSON (status ${res.status}). Check VITE_API_URL and that the backend is awake.`,
+      "API returned an unexpected shape. Expected { sales, total, page, totalPages, totalCount }.",
     );
   }
 }
@@ -54,81 +72,57 @@ export async function fetchTodaySales(
   pageSize = 10,
   search = "",
 ): Promise<TodaySalesResponse> {
-  const params = new URLSearchParams({
+  const params: Record<string, string> = {
     page: String(page),
     pageSize: String(pageSize),
-  });
-  if (search.trim()) params.set("search", search.trim());
-  let res: Response;
+  };
+  if (search.trim()) params.search = search.trim();
   try {
-    res = await fetch(requestUrl(`/api/sales/today?${params.toString()}`));
-  } catch {
-    throw new Error(
-      "Cannot reach the API. Check VITE_API_URL and that the backend is running.",
-    );
+    const { data } = await client.get("/api/sales/today", { params });
+    if (typeof data === "string") {
+      // HTML instead of JSON: wrong VITE_API_URL or backend waking up.
+      throw new Error(
+        "API did not return JSON. Check VITE_API_URL and that the backend is awake.",
+      );
+    }
+    assertTodayShape(data);
+    return data;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.startsWith("API did not return JSON")
+    )
+      throw error;
+    if (
+      error instanceof Error &&
+      error.message.startsWith("API returned an unexpected shape")
+    ) {
+      throw error;
+    }
+    throw toApiError(error, "Could not load sales.");
   }
-  if (!res.ok) throw new Error(await parseError(res));
-  const data = (await readJson(res)) as TodaySalesResponse;
-  if (
-    !Array.isArray(data.sales) ||
-    typeof data.total !== "number" ||
-    typeof data.page !== "number" ||
-    typeof data.totalPages !== "number" ||
-    typeof data.totalCount !== "number"
-  ) {
-    throw new Error(
-      "API returned an unexpected shape. Expected { sales, total, page, totalPages, totalCount }.",
-    );
-  }
-  return data;
 }
 
-export type SaleInput = {
-  itemName: string;
-  amount: number;
-  soldAt: string;
-};
-
 export async function createSale(input: SaleInput): Promise<void> {
-  let res: Response;
   try {
-    res = await fetch(requestUrl("/api/sales"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-  } catch {
-    throw new Error(
-      "Cannot reach the API. Check VITE_API_URL and that the backend is running.",
-    );
+    await client.post("/api/sales", input);
+  } catch (error) {
+    throw toApiError(error, "Could not save sale.");
   }
-  if (!res.ok) throw new Error(await parseError(res));
 }
 
 export async function updateSale(id: number, input: SaleInput): Promise<void> {
-  let res: Response;
   try {
-    res = await fetch(requestUrl(`/api/sales/${id}`), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-  } catch {
-    throw new Error(
-      "Cannot reach the API. Check VITE_API_URL and that the backend is running.",
-    );
+    await client.put(`/api/sales/${id}`, input);
+  } catch (error) {
+    throw toApiError(error, "Could not update sale.");
   }
-  if (!res.ok) throw new Error(await parseError(res));
 }
 
 export async function deleteSale(id: number): Promise<void> {
-  let res: Response;
   try {
-    res = await fetch(requestUrl(`/api/sales/${id}`), { method: "DELETE" });
-  } catch {
-    throw new Error(
-      "Cannot reach the API. Check VITE_API_URL and that the backend is running.",
-    );
+    await client.delete(`/api/sales/${id}`);
+  } catch (error) {
+    throw toApiError(error, "Could not delete sale.");
   }
-  if (!res.ok) throw new Error(await parseError(res));
 }
