@@ -143,4 +143,4 @@ My key decisions and their trade-offs:
 4. I kept validation hand-written with clear 400 messages instead of adding Zod. For three fields, one small function is easier to defend line-by-line than a new dependency — same reason the shared form fields and buttons are plain components, not a UI library.
 5. I picked Jest + ts-jest over the zero-dependency Node runner because it's what most teams expect, despite the extra setup it needs. Unit tests run with no database; endpoint tests need `DATABASE_URL` and clean up their own `E2E-`-tagged rows.
 
-With more time I would add shop accounts and login (right now anyone with the URL can edit everything), a day-picker so the owner can look back at past days instead of only today, and an end-to-end smoke test of the deployed frontend.
+With more time I would add shop accounts and login (right now anyone with the URL can edit everything), a day-picker so the owner can look back at past days instead of only today.
