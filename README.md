@@ -131,35 +131,6 @@ Returns `204` on success, `400` for a bad id, `404 { error }` for unknown ids.
 
 Write endpoints are rate-limited (100 per 15 minutes per IP, `429` with a JSON error when exceeded); reads are unlimited.
 
-## Deployment
-
-Frontend (Vercel):
-
-1. Import repo, set Root Directory to `client`.
-2. Set env `VITE_API_URL=https://<your-render-service>.onrender.com`.
-3. Build command `npm run build`, output `dist` (Vite defaults). Redeploy after changing env — Vite bakes it in at build time.
-
-Backend (Render):
-
-1. New Web Service, root directory `server`.
-2. Build: `npm install && npx prisma migrate deploy && npm run build`.
-3. Start: `npm start`.
-4. Env: `DATABASE_URL` (Supabase pooler `6543?pgbouncer=true`), `DIRECT_URL` (direct `5432`), `CLIENT_ORIGIN` (your Vercel URL), `NODE_ENV=production`.
-5. Run seed once: `npm run db:seed` from Render shell (or locally against the same DB).
-
-Database (Supabase):
-
-1. Create project, copy pooler + direct connection strings.
-2. Run `npx prisma migrate deploy` from Render build (creates `sales` table + index on `soldAt`).
-
-Production gotchas:
-
-- **Render free tier sleeps** after inactivity — first request takes ~30–60s. The frontend shows loading + retry for this reason, and the API client allows a 60s timeout so cold starts aren't cut off.
-- **Supabase pooler vs direct**: runtime must use the pooler (`6543` + `?pgbouncer=true`), migrations must use direct (`5432`). Mixing them up causes connect/timeout errors.
-- **`datetime-local` has no timezone**: the browser sends local wall time; the client converts to ISO (`toISOString`) before POST so the server stores true UTC.
-- **`#` in the DB password must be URL-encoded** as `%23` in `DATABASE_URL`/`DIRECT_URL`, or the connection string silently breaks.
-- **Empty `PORT` means port 0**: the server ignores empty/zero/invalid `PORT` and falls back to 4000 — otherwise Node picks a random port and Render restarts the deploy in a loop.
-
 ## Notes (draft — rewrite in your own words)
 
 What I built: a daily sales log where a shop owner logs item/amount/time and sees today's sales plus a DB-computed total. It grew into editing and deleting sales with a confirm dialog, case-insensitive search, paginated browsing with newest-added-first ordering, instant cache updates so saves show immediately, and Jest suites covering validation plus the sales endpoints.
