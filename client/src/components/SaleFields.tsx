@@ -41,7 +41,7 @@ export function SaleFields({
 
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="flex-1">
-          <Field label="Amount (₦, whole naira)" htmlFor={`${idPrefix}amount`}>
+          <Field label="Amount" htmlFor={`${idPrefix}amount`}>
             <input
               id={`${idPrefix}amount`}
               type="number"
